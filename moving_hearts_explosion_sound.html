@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Love Explosion Animation with Sound</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: black;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    /* Tombol Suara */
+    #soundBtn {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      padding: 12px 16px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 20px;
+      color: white;
+      transition: background 0.3s;
+      z-index: 10;
+    }
+
+    #soundBtn:hover {
+      background: rgba(255, 255, 255, 0.4);
+    }
+  </style>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <button id="soundBtn"><i class="fa-solid fa-volume-up"></i></button>
+
+  <!-- Musik Background -->
+  <audio id="sound" loop>
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- Efek Suara POP -->
+  <audio id="popSound">
+    <source src="https://www.myinstants.com/media/sounds/pop.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const hearts = [];
+    const explosions = [];
+    const colors = ["#ff4d4d", "#ff66cc", "#ffcc00", "#66ff66", "#66ccff"];
+
+    class Heart {
+      constructor(x, y, size, speed, color) {
+        this.x = x || Math.random() * canvas.width;
+        this.y = y || canvas.height + Math.random() * 100;
+        this.size = size || Math.random() * 20 + 10;
+        this.speed = speed || Math.random() * 2 + 1;
+        this.color = color || colors[Math.floor(Math.random() * colors.length)];
+        this.vx = (Math.random() - 0.5) * 4; 
+        this.vy = (Math.random() - 0.5) * 4;
+        this.life = 100;
+        this.isExplosion = false;
+      }
+
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.scale(this.size / 20, this.size / 20);
+        ctx.beginPath();
+        ctx.moveTo(0, -10);
+        ctx.bezierCurveTo(10, -20, 20, 0, 0, 20);
+        ctx.bezierCurveTo(-20, 0, -10, -20, 0, -10);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.restore();
+      }
+
+      update() {
+        if (this.isExplosion) {
+          this.x += this.vx;
+          this.y += this.vy;
+          this.life--;
+        } else {
+          this.y -= this.speed;
+          if (this.y < -20) {
+            this.y = canvas.height + 20;
+            this.x = Math.random() * canvas.width;
+            this.size = Math.random() * 20 + 10;
+            this.color = colors[Math.floor(Math.random() * colors.length)];
+          }
+        }
+        this.draw();
+      }
+    }
+
+    // Hujan love awal
+    for (let i = 0; i < 80; i++) {
+      hearts.push(new Heart());
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      hearts.forEach(heart => heart.update());
+
+      for (let i = explosions.length - 1; i >= 0; i--) {
+        explosions[i].update();
+        if (explosions[i].life <= 0) {
+          explosions.splice(i, 1);
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    // 🎆 Efek klik → ledakan + suara POP
+    const popSound = document.getElementById("popSound");
+    canvas.addEventListener("click", (e) => {
+      for (let i = 0; i < 30; i++) {
+        let h = new Heart(e.clientX, e.clientY, Math.random() * 10 + 5);
+        h.isExplosion = true;
+        explosions.push(h);
+      }
+
+      // Mainkan efek suara pop
+      popSound.currentTime = 0;
+      popSound.play();
+    });
+
+    // 🎵 Kontrol Musik Background
+    const sound = document.getElementById("sound");
+    const soundBtn = document.getElementById("soundBtn");
+    let isPlaying = false;
+
+    soundBtn.addEventListener("click", () => {
+      if (isPlaying) {
+        sound.pause();
+        soundBtn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+      } else {
+        sound.play();
+        soundBtn.innerHTML = '<i class="fa-solid fa-volume-up"></i>';
+      }
+      isPlaying = !isPlaying;
+    });
+
+    // Auto resize
+    window.addEventListener("resize", () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  </script>
+</body>
+</html>
